@@ -74,8 +74,15 @@ void DronePhysics::publish()
     t.state             = mode_;
     t.timeSecSinceStart = timeSinceStart_;
 
-    std::lock_guard<std::mutex> lock(teleMutex_);
-    telemetry_ = t;
+    {
+        std::lock_guard<std::mutex> lock(teleMutex_);
+        telemetry_ = t;
+    }
+
+    // Fired from whichever thread calls step() (the physics loop) — outside
+    // the lock so the hook can freely call getTelemetry() without deadlocking.
+    if (telemetryHook_)
+        telemetryHook_(t);
 }
 
 DroneTelemetry DronePhysics::getTelemetry() const

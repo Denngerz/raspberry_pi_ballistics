@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -32,6 +33,18 @@ public:
 
     bool writeLog(const char* path) const;
 
+    // Called once, the instant the mission's FIRST target release point is
+    // reached (dropPointLocal = the planned drop point, local metres;
+    // altitudeM = the drone's flight altitude). Used to fire the MAVLink
+    // ballistic-drop command (lesson 34/7.1) without MissionRunner knowing
+    // anything about MAVLink. Only the first release is reported: MAV_CMD_
+    // USER_1 carries no target id, and the checker's protocol is single-shot
+    // (ignore the first COMMAND_LONG, ack the retry, then expect silence) —
+    // later targets still get bombed by the mission as usual, just not
+    // re-announced over MAVLink.
+    using DropHook = std::function<void(Coord dropPointLocal, float altitudeM)>;
+    void setDropHook(DropHook hook) { dropHook_ = std::move(hook); }
+
 private:
     struct Step
     {
@@ -59,6 +72,9 @@ private:
 
     std::vector<Step>  log_;
     mutable std::mutex logMutex_;
+
+    DropHook dropHook_;
+    bool     dropReported_ = false;
 
     std::atomic<bool> ready_{ false };
     std::atomic<bool> started_{ false };

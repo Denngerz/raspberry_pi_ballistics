@@ -71,6 +71,13 @@ void MissionRunner::planAndCommand()
         std::cout << "Drop on target " << currentIdx_
                   << " at (" << ctx_.position.x << ", " << ctx_.position.y << ")"
                   << " t=" << tel.timeSecSinceStart << '\n';
+
+        if (dropHook_ && !dropReported_)
+        {
+            dropHook_(dropPt, cfg_.altitude);
+            dropReported_ = true;
+        }
+
         ++currentIdx_;
         if (currentIdx_ >= targets_->getTargetCount())
             done_.store(true);

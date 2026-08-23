@@ -61,9 +61,16 @@ compile_commands.json
 # vcpkg
 vcpkg_installed/
 
+# Vendored, cloned-on-demand dependency (see README: git clone --depth 1
+# https://github.com/mavlink/c_library_v2.git)
+/c_library_v2/
+
 # debug information files
 *.dwo
 
 # test output & cache
 Testing/
 .cache/
+
+# simulator run output
+simulation.json

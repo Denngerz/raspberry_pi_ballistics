@@ -1,5 +1,6 @@
 #pragma once
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <thread>
 #include "../dto/Coord.hpp"
@@ -25,6 +26,13 @@ public:
     // Immutable snapshot of the current drone state.
     DroneTelemetry getTelemetry() const;
 
+    // Called with every freshly published telemetry snapshot, from whichever
+    // thread calls step()/run() — i.e. the physics loop itself. Used to
+    // stream MAVLink telemetry (lesson 34/7.1) without DronePhysics knowing
+    // anything about MAVLink.
+    using TelemetryHook = std::function<void(const DroneTelemetry&)>;
+    void setTelemetryHook(TelemetryHook hook) { telemetryHook_ = std::move(hook); }
+
     // Thread lifecycle.
     void run();              // thread body
     bool isThreadReady() const { return ready_.load(); }
@@ -49,6 +57,7 @@ private:
 
     mutable std::mutex teleMutex_;
     DroneTelemetry     telemetry_;
+    TelemetryHook      telemetryHook_;
 
     std::atomic<bool> ready_{ false };
     std::atomic<bool> started_{ false };
